@@ -1,7 +1,7 @@
 name: Manual Deploy
 
 on:
-  working-directory: ././my_site
+  working-directory: my_site
   push:
     branches: [main]
   pull_request:
