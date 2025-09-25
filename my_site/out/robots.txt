@@ -1,2 +1,2 @@
 User-agent: *
-Sitemap: https://diz.stady.io/sitemap.xml
+Sitemap: https://diz.study.io/sitemap.xml
