@@ -1,62 +1,61 @@
 name: Manual Deploy
 
 on:
-  working-directory: my_site
   push:
     branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.10 ]
+        python-version: [3.10]
+    defaults:
+      run:
+        working-directory: ././my_site  # ✅ 正确的工作目录设置位置
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 替代 --unshallow
 
-      # 你的构建步骤（保持原样）
-      - name: build doc
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install setuptools teedoc
+          teedoc install
+
+      - name: Build docs
         id: build_doc
         run: |
-          git fetch --unshallow # fetch all history
-          pip3 install setuptools
-          pip3 install teedoc
-          ls -al ~/.local/bin/
-          export PATH=~/.local/bin/:$PATH
-          commit_info=`git describe --all --always --long`
-          out_dir=out`python3 -c 'import json; f=open("site_config.json");config=json.load(f);print(config["site_root_url"])'`
-          teedoc install
-          teedoc build
-          echo "out dir: ${out_dir}"
-          cp -rf .github $out_dir
-          echo ::set-output name=out_dir::$out_dir
-          remote_addr=`git remote get-url --push origin`
-          echo "remote addr: ${remote_addr}"
-          cd $out_dir
-          user_name=`git log -1 --pretty=format:'%an'`
-          user_email=`git log -1 --pretty=format:'%ae'`
-          git config --global init.defaultBranch gh-pages
-          git init
-          git config user.name ${user_name}
-          git config user.email ${user_email}
+          # 显式指定配置文件
+          teedoc build --config site_config.json
+          
+          # 获取输出目录
+          out_dir=out$(python -c "import json;print(json.load(open('site_config.json'))['site_root_url'])")
+          echo "out_dir=${out_dir}" >> $GITHUB_OUTPUT
+          
+          # 复制必要文件
+          [ -d "${out_dir}" ] || { echo "Error: Output dir not found"; exit 1; }
+          cp -rf .github "${out_dir}"
+
+      - name: Prepare deployment
+        run: |
+          cd ${{ steps.build_doc.outputs.out_dir }}
+          
+          git init -b gh-pages
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git add -A
-          git commit -m "rebuild website ad $commit_info"
-          if [[ "${{ secrets.ACCESS_KEY }}x" == "x" ]]; then
-            remote_addr=`echo $remote_addr|  awk -F'://' '{print $2}'`
-            remote_addr=https://${user_name}:${{ secrets.GITHUB_TOKEN }}@${remote_addr}
-          else
-            SSHPATH="$HOME/.ssh"
-            rm -rf "$SSHPATH"
-            mkdir -p "$SSHPATH"
-            echo "${{ secrets.ACCESS_KEY }}" > "$SSHPATH/id_rsa"
-            chmod 600 "$SSHPATH/id_rsa"
-            sudo sh -c "echo StrictHostKeyChecking no >>/etc/ssh/ssh_config"
-            domain=`echo $remote_addr|  awk -F'/' '{print $3}'`
-            user_org=`echo $remote_addr|  awk -F'/' '{print $4}'`
-            repo=`echo $remote_addr|  awk -F'/' '{print $5}'`
-            remote_addr=git@${domain}:${user_org}/${repo}.git
-          fi
-          git remote add origin ${remote_addr}
+          git commit -m "Deploy ${{ github.sha }}"
+
+      - name: Deploy
+        run: |
+          cd ${{ steps.build_doc.outputs.out_dir }}
           git push origin HEAD:gh-pages --force
