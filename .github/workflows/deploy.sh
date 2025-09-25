@@ -8,7 +8,7 @@ git checkout --orphan gh-pages
 git rm -rf .
 
 # 3. 仅提交构建结果
-cp -r .teedoc_build/* .
+cp -r .my_site/* .
 git add .
 git commit -m "Deploy $(date +'%Y-%m-%d %H:%M:%S')"
 

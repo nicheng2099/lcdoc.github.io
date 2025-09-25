@@ -15,8 +15,7 @@
             "/": "pages/index"
         },
         "assets": {
-            "/static/": "static",
-            "/image/" : "docs/doc2/image"
+            "/static/": "static"
         }
     },
     "plugins": {
