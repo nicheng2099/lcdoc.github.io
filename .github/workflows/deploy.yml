@@ -1,7 +1,7 @@
 name: Manual Deploy
 
 on:
-  workflow_dispatch:  # 手动触发
+  working-directory: ././my_site
   push:
     branches: [main]
   pull_request:
@@ -26,7 +26,7 @@ jobs:
           ls -al ~/.local/bin/
           export PATH=~/.local/bin/:$PATH
           commit_info=`git describe --all --always --long`
-          out_dir=out`python3 -c 'import json; f=open("my_site/site_config.json");config=json.load(f);print(config["site_root_url"])'`
+          out_dir=out`python3 -c 'import json; f=open("site_config.json");config=json.load(f);print(config["site_root_url"])'`
           teedoc install
           teedoc build
           echo "out dir: ${out_dir}"

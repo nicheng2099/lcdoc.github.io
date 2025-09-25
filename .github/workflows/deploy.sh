@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # 1. 构建网站（使用你的原始构建命令）
+cd my_site
 teedoc build
 
 # 2. 创建特殊部署分支
