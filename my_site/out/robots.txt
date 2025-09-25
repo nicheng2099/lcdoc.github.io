@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://diz.stady.io/sitemap.xml
