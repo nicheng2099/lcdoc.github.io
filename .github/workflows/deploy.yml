@@ -1,61 +1,49 @@
-name: Manual Deploy
+name: Deploy Documentation
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.10]
-    defaults:
-      run:
-        working-directory: ././my_site  # ✅ 正确的工作目录设置位置
-
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # 替代 --unshallow
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
-          pip install setuptools teedoc
-          teedoc install
+          pip install teedoc==1.37.9
+          cd my_site && teedoc install
 
-      - name: Build docs
-        id: build_doc
+      - name: Prepare config
         run: |
-          # 显式指定配置文件
-          teedoc build --config site_config.json
-          
-          # 获取输出目录
-          out_dir=out$(python -c "import json;print(json.load(open('site_config.json'))['site_root_url'])")
-          echo "out_dir=${out_dir}" >> $GITHUB_OUTPUT
-          
-          # 复制必要文件
-          [ -d "${out_dir}" ] || { echo "Error: Output dir not found"; exit 1; }
-          cp -rf .github "${out_dir}"
+          # 创建双重配置保障
+          cd my_site
+          cp site_config.json site_config.yml
+          ln -sf site_config.json site_config.yml
+          echo "=== Config files ==="
+          ls -la site_config.*
 
-      - name: Prepare deployment
+      - name: Build documentation
         run: |
-          cd ${{ steps.build_doc.outputs.out_dir }}
+          cd my_site && \
+          teedoc build --config site_config.json --debug
           
-          git init -b gh-pages
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add -A
-          git commit -m "Deploy ${{ github.sha }}"
+          # 验证构建结果
+          [ -d "my_site/.teedoc_build" ] || {
+            echo "❌ Build failed: no output directory"
+            exit 1
+          }
 
-      - name: Deploy
-        run: |
-          cd ${{ steps.build_doc.outputs.out_dir }}
-          git push origin HEAD:gh-pages --force
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./my_site/.teedoc_build
+          force_orphan: true
