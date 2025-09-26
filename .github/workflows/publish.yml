@@ -42,7 +42,7 @@ jobs:
           out_dir=out`python3 -c 'import json; f=open("site_config.json");config=json.load(f);print(config["site_root_url"])'`
           teedoc install
           teedoc build
-          cd ./
+          cd ../
           echo "out dir: ${out_dir}"
           cp -rf .github $out_dir
           echo ::set-output name=out_dir::$out_dir
