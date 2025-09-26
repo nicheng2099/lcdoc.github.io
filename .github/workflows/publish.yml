@@ -27,7 +27,6 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
       # Runs a set of commands using the runners shell
       - name: build doc
         id: build_doc
@@ -74,3 +73,9 @@ jobs:
           fi
           git remote add origin ${remote_addr}
           git push origin HEAD:gh-pages --force
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./my_site/out
