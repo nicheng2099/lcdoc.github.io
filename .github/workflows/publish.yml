@@ -38,7 +38,7 @@ jobs:
           pip3 install -U teedoc -i https://pypi.tuna.tsinghua.edu.cn/simple
           pip3 install -r requirements.txt
           cd my_site
-          out_dir=out`python3 -c 'import json; f=open("site_config.json");config=json.load(f)])'`
+          out_dir=out`python3 -c 'import json; f=open("site_config.json");config=json.load(f))'`
           teedoc install
           teedoc build
           cp -rf .github $out_dir
