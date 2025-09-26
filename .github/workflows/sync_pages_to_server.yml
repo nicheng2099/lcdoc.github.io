@@ -25,7 +25,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: checkout code from github
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       # Runs a set of commands using the runners shell
       - name: sync shell cmd
@@ -40,4 +40,3 @@ jobs:
           chmod 600 "$SSHPATH/id_rsa"
           sudo sh -c "echo StrictHostKeyChecking no >>/etc/ssh/ssh_config"
           rsync -avz -c -r --exclude='.git' ./*  ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}/
-
